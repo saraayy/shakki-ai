@@ -1,0 +1,2 @@
+# shakki-ai
+Shakin tekoälyprojekti
