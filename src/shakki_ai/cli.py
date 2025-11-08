@@ -8,3 +8,10 @@ Sisältö:
 - Virhesyötteiden käsittely
 
 """
+
+from shakki_ai.board import Board
+
+def main():
+    b = Board()
+    b.render()
+    
