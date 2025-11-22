@@ -1,3 +1,5 @@
+from shakki_ai.board import Board
+
 """
 Komentorivi käyttöliittymä ihmispelaajalle
 
@@ -14,4 +16,11 @@ from shakki_ai.board import Board
 def main():
     b = Board()
     b.render()
+
+    s = input("Syötä siirto: ")
+    move = b.parse_move(s)
+
+    print(f"Koordinaatit: {move}")
     
+
+
