@@ -1,5 +1,5 @@
 """
-Vastaa tekpälyn päätöksenteosta.
+Vastaa tekoälyn päätöksenteosta.
 
 Sisältö:
 - minmax (valitsee siirron annettulla syvyydellä)

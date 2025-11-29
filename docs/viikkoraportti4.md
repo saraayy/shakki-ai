@@ -1,4 +1,4 @@
-# Viikkoraportti 1
+# Viikkoraportti 4
 
 ## Mitä olen tehnyt tällä viikolla?
 Olen tällä viikolla alkanut suorittamaan siirtoja laudalla, siirtojen tekemistä ja peruuttamista. Olen myös tehnyt siirrot ratsulle. Olen tehnyt toimintoja, jossa pidetään muistissa kenen vuoro on, onko ruudulla nappula, onko ruutu tyhjä, onko ruudulla vihollinen tai ystävä. 

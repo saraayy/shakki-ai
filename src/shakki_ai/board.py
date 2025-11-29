@@ -3,212 +3,246 @@ Vastaa shakkilaudan tilasta ja siirtojen käsittelystä.
 
 Sisältö:
 - 8x8lauta
+- rivit 0 - 7 (alhaalta ylös)
+- sarakkeet 0 - 7 (vasemmalta oikealle)
 - Siirtojen suoritus ja peruuttaminen (make/undo)
 - Perustoiminnot tilan tarkasteluun (vuorot, pelin päättymisehdot)
-
 """
+
+BOARD_SIZE = 8
+
+WHITE_PAWN = 1    #sotilas
+WHITE_ROOK = 2    #torni
+WHITE_KNIGHT = 3  #ratsu
+WHITE_BISHOP = 4  #lähetti
+WHITE_KING = 5    #kuningas
+WHITE_QUEEN = 6   #kuningatar
+
+
+BLACK_PAWN = -1     #sotilas
+BLACK_ROOK = -2     #torni
+BLACK_KNIGHT = -3   #ratsu
+BLACK_BISHOP = -4   #lähetti
+BLACK_KING = -5     #kuningas
+BLACK_QUEEN = -6    #kuningatar
+
+
+
+
 
 class Board():
 
     def __init__ (self):
-        self.board = [
-    ["r", "n", "b", "q", "k", "b", "n", "r"],
-    ["p", "p", "p", "p", "p", "p", "p", "p"],
-    [".", ".", ".", ".", ".", ".", ".", "."],
-    [".", ".", ".", ".", ".", ".", ".", "."],
-    [".", ".", ".", ".", ".", ".", ".", "."],
-    [".", ".", ".", ".", ".", ".", ".", "."],
-    ["P", "P", "P", "P", "P", "P", "P", "P"],
-    ["R", "N", "B", "Q", "K", "B", "N", "R"],
-    ]
+        self.board = []
+        for i in range(BOARD_SIZE):
+            row = []
+            for j in range(BOARD_SIZE):
+                row.append(0)
+            self.board.append(row)
 
-        self.turn = "white"  
+        self.pieces = []
+        self.turn = 1
+        self._setup_start_pos()
 
-    def render(self):
-        for i, row in enumerate(self.board): # Käy läpi laudan rivit
-            print(8-i," ".join(row)) 
-        print("  a b c d e f g h")  
 
-    def get_piece(self, row, col): #Hakee nappulan ruudusta
+    def _add_piece(self, piece, row, col):
+        self.board[row][col] = piece
+        self.pieces.append((piece, row, col))
+
+    def _setup_start_pos(self):
+        for i in range(BOARD_SIZE): 
+            self._add_piece(WHITE_PAWN, 1, i)
+
+        self._add_piece(WHITE_ROOK, 0, 0)
+        self._add_piece(WHITE_ROOK, 0, 7)
+
+        self._add_piece(WHITE_KNIGHT, 0, 1)
+        self._add_piece(WHITE_KNIGHT, 0, 6)
+
+        self._add_piece(WHITE_BISHOP, 0, 2)
+        self._add_piece(WHITE_BISHOP, 0, 5)
+
+        self._add_piece(WHITE_KING, 0, 3)
+        self._add_piece(WHITE_QUEEN, 0, 4)
+
+        for i in range(BOARD_SIZE): 
+            self._add_piece(BLACK_PAWN, 6, i)
+
+        
+        self._add_piece(BLACK_ROOK, 7, 0)
+        self._add_piece(BLACK_ROOK, 7, 7)
+
+        self._add_piece(BLACK_KNIGHT, 7, 1)
+        self._add_piece(BLACK_KNIGHT, 7, 6)
+
+        self._add_piece(BLACK_BISHOP, 7, 2)
+        self._add_piece(BLACK_BISHOP, 7, 5)
+
+        self._add_piece(BLACK_KING, 7, 3)
+        self._add_piece(BLACK_QUEEN, 7, 4)
+
+
+
+    def in_bounds(self, row, col):
+        if 0 <= row <= 7 and 0 <= col <= 7:
+            return True
+        else:
+            return False
+
+    
+    def get_piece(self, row, col):
         return self.board[row][col]
     
-    def parse_move(self, text):
-        text = text.strip()
-
-        col_1 = text[0]
-        row_1 = text[1]
-        col_2 = text[2]
-        row_2 = text[3]
-
-
-        if len(text) != 4:
-            raise ValueError("Siirron pitää olla muodossa 'e2e4' ")
-
-        if col_1 not in  "abcdefgh" and col_2 not in "abcdefgh":
-            raise ValueError("Sarakkeen pitää olla a-h")
-        
-        if row_1 not in "12345678" and row_2 not in "12345678":
-            raise ValueError("Rivin pitää olla 1-8")
-        
-
-        col_1_idx = ord(col_1) - ord('a')
-        col_2_idx = ord(col_2) - ord('a')
-
-        row_1_idx = 8 - int(row_1)
-        row_2_idx = 8 - int(row_2)
-
-        return (row_1_idx, col_1_idx), (row_2_idx, col_2_idx)
-    
-    def in_bounds(self, row, col): 
-        
-        if row in range(0,8) and col in range(0,8):
-            return True
-        else: 
-            return False
-
-
-    def piece_color(self, piece): 
-        
-        if piece == ".":
-            return None
-        elif piece.isupper():
-            return "white"
-        elif piece.islower():
-            return "black"
-        else:
-            return None
-
-
-    def color_at(self, row, col):
-        if self.in_bounds(row, col): 
-            return self.piece_color(self.board[row][col])
-
-        else:
-            return None
-
-        
     def is_empty(self, row, col):
-        if not self.in_bounds(row, col):
-            return False
-        piece = self.board[row][col]
-        if piece == ".":
+        piece = self.get_piece(row, col)
+        if piece == 0:
             return True
         else:
-             return False
-
+            return False
+        
 
     def is_friend(self, row, col, color):
-        if not self.in_bounds(row, col):
-            return False
-        
-        square_color = self.color_at(row, col)
-        if square_color is None:
-            return False
+        piece = self.get_piece(row, col)
 
-        return square_color == color
+        if piece * color > 0:
+            return True
+        else:
+            return False
             
     
     def is_enemy(self, row, col, color):
-        if not self.in_bounds(row, col):
-            return False
-            
-        square_color = self.color_at(row, col)
-        if square_color is None:
+        piece = self.get_piece(row, col)
+
+        if piece * color < 0:
+            return True
+        
+        else:
             return False
 
-        return square_color != color
+
+    
+    def parse_move(self, text):
+        text = text.strip().lower()
+
+        if len(text) != 4:
+            print("syötteen täytyy olla neljä merkkiä")
+            return None
+        
+        col1 = text[0]
+        row1 = text[1]
+        col2 = text[2]
+        row2 = text[3]
+
+        if col1 not in "abcdefgh" or col2 not in "abcdefgh":
+            print("kirjainten pitää olla välillä a-h")
+            return None
+        if row1 not in "12345678" or row2 not in "12345678":
+            print("Numeroiden pitää olla välillä 1-8")
+            return None
+        
+        c1 = ord(col1) - ord("a")
+        c2 = ord(col2) - ord("a")
+        r1 = int(row1) - 1
+        r2 = int(row2) - 1
+
+        return (r1,c1), (r2,c2)
 
 
 
     def make_move(self, move):
-        (r1, c1), (r2,c2) = move
-
-        if not self.in_bounds(r1,c1) or not self.in_bounds(r2,c2):
-            raise ValueError("Siirto laudan ulkopuolella")
-
-        piece = self.get_piece(r1,c1)
-
-        if piece == ".":
-            raise ValueError("Alkuruutu on tyhjä")
-        
-        piece_color = self.piece_color(piece)
-
-        if piece_color != self.turn:
-            raise ValueError ("Et voi siirtää vastustajan nappulaa") 
-        
-        target = self.board[r2][c2]
-
-        if target == ".":
-            captured_piece = None
-            
-        elif target != ".":
-            captured_piece = target
-
-        self.board[r2][c2] = piece
-        self.board[r1][c1] = "."
+        (r1, c1), (r2, c2) = move 
 
         previous_turn = self.turn
 
-        if self.turn == "black":
-            self.turn = "white"
-
-        elif self.turn == "white":
-            self.turn = "black"
-
-        move_info = {
-            "from": (r1, c1),
-            "to": (r2, c2),
-            "moved_piece": piece,
-            "captured_piece": captured_piece,
-            "previous_turn": previous_turn
-            }
+        if not self.in_bounds(r2, c2) or not self.in_bounds(r1, c1):
+            print("Siirron täytyy olla laudalla")
+            return None
         
+        piece = self.board[r1][c1]
+
+        if piece == 0:
+            print("Alkuruutu tyhjä")
+            return None
+        
+        if piece * self.turn <= 0:
+            print("Vastustajan nappulaa ei saa siirtää!")
+            return None
+        
+        captured = self.board[r2][c2]
+
+        if captured != 0 and captured * self.turn > 0:
+            print("Oma nappula ruudussa")
+            return None
+
+        self.board[r2][c2] = piece
+        self.board[r1][c1] = 0
+
+
+        for i, (p, rr, cc) in enumerate(self.pieces):
+            if p == piece and rr == r1 and cc == c1:
+                self.pieces[i] = (piece, r2, c2)
+                break
+        
+        for i, (p, rr, cc) in enumerate(self.pieces):
+            if p == captured and rr == r2 and cc == c2:
+                self.pieces.pop(i)
+                break
+
+
+        self.turn *= -1
+
+        move_info = {"from": (r1, c1), 
+                    "to": (r2, c2), 
+                    "moved_piece": piece, 
+                    "captured": captured,
+                    "previous_turn": previous_turn}
+
         return move_info
 
 
-    def undo_move(self, info):
-        r1, c1 = info["from"]
-        r2, c2 = info["to"]
-        previous_turn = info["previous_turn"]
-        moved_piece = info["moved_piece"]
-        captured_piece = info["captured_piece"]
+    
 
-        self.board[r1][c1] = moved_piece
+    def undo_move(self, move_info):
+        (r1, c1) = move_info["from"]
+        (r2, c2) = move_info["to"]
+        piece = move_info["moved_piece"]
+        captured = move_info["captured"]
+        previous_turn = move_info["previous_turn"]
 
-        if captured_piece == None:
-            self.board[r2][c2] = "."
+
+        self.board[r1][c1] = piece 
+
+        if captured == 0:
+            self.board[r2][c2] = 0
 
         else:
-            self.board[r2][c2] = captured_piece 
+            self.board[r2][c2] =  captured
+
+        
+        for i, (p, rr, cc) in enumerate(self.pieces):
+            if p == piece and rr == r2 and cc == c2:
+                self.pieces[i] = (piece, r1, c1)
+                break
+
+        if captured != 0:
+            self.pieces.append((captured, r2, c2))
 
         self.turn = previous_turn
 
-    def generate_moves_for_square(self, row, col):
-        piece = self.get_piece(row, col)
 
-        if piece == ".":
-            return []
-        
-        piece_type = piece.upper()
-        color = self.piece_color(piece)
 
-        if color != self.turn:
-            return []
-        
-        if piece_type == "N":
-            return self._knight_moves(row, col, color)
 
-        else:
-            return []
+    def generate_knight_moves(self, row, col):
+
+        offsets = [(+2, +1), (+2, -1), (-2, +1), (-2, -1), 
+                   (+1, +2), (+1, -2), (-1, +2), (-1, -2)] #(dr, dc)
         
-    
-    def _knight_moves(self, row, col, color):
+        color = self.turn
+
         moves = []
-        offsets = [
-            (+2, +1), (+2, -1), (-2, +1), (-2, -1), 
-            (+1, +2), (+1, -2), (-1, +2), (-1, -2)
-        ]
-        for dr, dc in offsets:
+
+
+        for (dr, dc) in offsets:
             new_row = row + dr
             new_col = col + dc
 
@@ -219,12 +253,57 @@ class Board():
                 continue
 
             moves.append(((row, col), (new_row, new_col)))
-            
 
         return moves
+
+
+
+    def generate_pawn_moves(self, row, col):
+        piece = self.board[row][col]
+        moves = []
+
+        if piece == 0:
+            return []
+
+        if piece > 0:  #valkoinen
+            dir = +1
+
+        if piece < 0: #musta
+            dir = -1
+
+
+        new_row = row + dir
+
+        if self.in_bounds(new_row, col) and self.is_empty(new_row, col):
+            moves.append(((row, col), (new_row, col)))
+
+        return moves
+
+
+    def generate_bishop_moves(self, row, col):
+        piece = self.board[row][col]
+
+        if piece < 0:
+            color = -1
+
+        if piece > 0:
+            color = +1
+
+        offsets = [(+1, +1), (+1, -1), (-1, +1), (-1, -1)]
+
+        for (dr, dc) in offsets:
+            step = 1
+            while True:
+                new_row = row + (step*dr)
+                new_col = col + (step*dc)
+                if not self.in_bounds(new_row, new_col) or self.is_friend(new_row, new_col, color):
+                    break
+                if self.is_enemy(new_row, new_col, color):
+                    step += 1
+                    break
+                step += 1
         
 
-        
 
 
 
