@@ -8,7 +8,6 @@ Sisältö:
 - Vuoron hallinta
 - Laudan tulostus siirtojen jälkeen
 - Virhesyötteiden käsittely
-
 """
 
 from shakki_ai.board import Board

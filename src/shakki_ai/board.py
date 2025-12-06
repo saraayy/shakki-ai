@@ -283,11 +283,10 @@ class Board():
     def generate_bishop_moves(self, row, col):
         piece = self.board[row][col]
 
-        if piece < 0:
-            color = -1
-
-        if piece > 0:
-            color = +1
+        if piece == 0:
+            return []
+        
+        moves = []
 
         offsets = [(+1, +1), (+1, -1), (-1, +1), (-1, -1)]
 
@@ -296,14 +295,140 @@ class Board():
             while True:
                 new_row = row + (step*dr)
                 new_col = col + (step*dc)
-                if not self.in_bounds(new_row, new_col) or self.is_friend(new_row, new_col, color):
+
+                if not self.in_bounds(new_row, new_col):
                     break
-                if self.is_enemy(new_row, new_col, color):
-                    step += 1
+
+                if not self.is_empty(new_row, new_col):
                     break
+                
+                
+            
+                moves.append(((row, col), (new_row, new_col)))
                 step += 1
+
+
+        return moves
+
+
+    def generate_rook_moves(self, row, col):
+        piece = self.board[row][col]
+
+        if piece == 0:
+            return []
         
+        moves = []
+
+        offsets = [(+1, 0), (0, +1), (-1, 0), (0, -1)]
+
+        for (dr, dc) in offsets:
+            step = 1
+            while True:
+                new_row = row + (step*dr)
+                new_col = col + (step*dc)
+
+                if not self.in_bounds(new_row, new_col):
+                    break
+
+                if not self.is_empty(new_row, new_col):
+                    break
+                
+                
+            
+                moves.append(((row, col), (new_row, new_col)))
+                step += 1
 
 
+        return moves
 
+
+    def generate_queen_moves(self, row, col):
+        piece = self.board[row][col]
+
+        if piece == 0:
+            return []
+        
+        moves = []
+
+        offsets = [(+1, 0), (0, +1), (-1, 0), (0, -1), (+1, +1), (+1, -1), (-1, +1), (-1, -1)]
+
+        for (dr, dc) in offsets:
+            step = 1
+            while True:
+                new_row = row + (step*dr)
+                new_col = col + (step*dc)
+
+                if not self.in_bounds(new_row, new_col):
+                    break
+
+                if not self.is_empty(new_row, new_col):
+                    break
+                
+                
+            
+                moves.append(((row, col), (new_row, new_col)))
+                step += 1
+
+
+        return moves
+    
+    def generate_king_moves(self, row, col):
+        piece = self.board[row][col]
+
+        if piece == 0:
+            return []
+        
+        moves = []
+
+        offsets = [(+1, 0), (0, +1), (-1, 0), (0, -1), (+1, +1), (+1, -1), (-1, +1), (-1, -1)]
+
+        for (dr, dc) in offsets:
+            new_row = row + dr
+            new_col = col + dc
+
+            if self.in_bounds(new_row, new_col) and self.is_empty(new_row, new_col):
+                moves.append(((row, col), (new_row, new_col)))
+
+        return moves
+    
+
+    def generate_piece_moves(self, row, col):
+        piece = self.board[row][col]
+
+        if piece == 0:
+            return []
+        
+        if abs(piece) == WHITE_PAWN:
+            return self.generate_pawn_moves(row, col) 
+
+        elif abs(piece) == WHITE_ROOK:
+            return self.generate_rook_moves(row, col) 
+
+        elif abs(piece) == WHITE_KNIGHT:
+            return self.generate_knight_moves(row, col) 
+
+        elif abs(piece) == WHITE_BISHOP:
+            return self.generate_bishop_moves(row, col)  
+
+        elif abs(piece) == WHITE_KING:
+            return self.generate_king_moves(row, col)  
+
+        elif abs(piece) == WHITE_QUEEN:
+            return self.generate_queen_moves(row, col) 
+
+        return []
+    
+    def generate_all_moves(self, color):
+        all_moves = []
+
+        for (piece, row, col) in self.pieces:
+
+            if piece * color <= 0:
+                continue
+
+            moves_for_this_piece = self.generate_piece_moves(row, col)
+            all_moves.extend(moves_for_this_piece)
+
+
+        return all_moves 
 
